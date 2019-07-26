@@ -1,0 +1,118 @@
+﻿
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="scripts/jquery.js"></script>
+    <link href="styles/w3css.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+    <script src="scripts/SmartSwitchJavaScriptAPI.js"></script>
+</head>
+<body>
+    <div id="main-div">
+
+        <h4><u>Settings page of device:</u></h4>
+        <table>
+            <tr>
+                <td><p>Nickname:   </p></td>
+                <td><input type="text" id="Nickname"></td>
+            </tr>
+            <tr>
+                <td><p>Mac Address:   </p></td>
+                <td><p id="mac-address"></p></td>
+            </tr>
+            <tr>
+                <td><p>Added at:   </p></td>
+                <td> <input type="date" name="date-added" disabled id="Date-Add"></td>
+            </tr>
+            <tr>
+                <td><p>Priority:   </p></td>
+                <td>
+                    <table id="prio-table">
+                        <tr>
+                            <td><input type="radio" name="prio" value="Essential" id="ess">Essential</td>
+                            <td><input type="radio" name="prio" value="Nonessential" id="noness">Nonessential</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="button" value="remove-device" class="w3-button w3-red w3-round" onclick="DeleteDevice()" />
+                </td>
+                <td> <input type="button" value="approve" class="w3-button w3-blue w3-round" onclick="ChangeSettings()" /></td>
+            </tr>
+        </table>
+
+    </div>
+
+
+    <script>
+        let username, myPlugMac, myPlug;/* variables for easy use during functions*/
+
+
+        $(document).ready(function () {           
+            username = sessionStorage.currentSmartSwitchUser;  //linking the variables to the client
+            myPlugMac = sessionStorage.currentMac;
+
+            /*getting the current plug information and displaying it for the client*/
+            getPlug(myPlugMac, function (plug) {
+                myPlug = plug;
+                let $currentNickname = myPlug.nickname;
+                $("#Nickname").attr("placeholder", $currentNickname)
+                $("#mac-address").text(myPlugMac);
+                $("#Date-Add").val(formatDate(myPlug.addedAt));
+
+                if (myPlug.priority == Priorities.Essential)
+                    $("input[type='radio'][id='ess']").attr("checked", true);
+                else
+                    $("input[type='radio'][id='noness']").attr("checked", true);
+
+            })
+
+        });
+        /*function returns a date string*/
+        function formatDate(date) {
+            let month = (date.getMonth() + 1) <= 9 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1;
+            let day = date.getDate() <= 9 ? '0' + date.getDate() : date.getDate();
+            return date.getFullYear() + '-' + month + '-' + day;
+        }
+        /*removes plug for the database and removes it as an option for the client as a future plug */
+        function DeleteDevice() {
+            denyPlug(myPlug.mac, function () {
+                
+                parent.openPage("plugsMainViewer");  //go to PlugMainViewer page after deleting
+            })
+
+           
+        }
+        /*this function deals with changing the cuurent properties of the plug to the ones the client chooses */
+        function ChangeSettings() {           
+
+            let priorityString = $("input[name='prio']:checked").val();
+            let priorityToSend;
+            if (priorityString === "Essential") priorityToSend = Priorities.Essential;
+            else priorityToSend = Priorities.Nonessential;
+
+            /*defining the new properties for the plug */
+            let plugProperties = {
+                "mac": myPlug.mac,
+                "nickname": $("#Nickname").val(),
+                "priority": priorityToSend
+            };
+
+            /*updating the plug's properties in the database and displaying them for the client */
+            updatePlug(plugProperties, function () {
+                myPlug.nickname = $("#Nickname").val();
+                $("#Nickname").attr("placeholder", $("#Nickname").val())
+                myPlug.priority = $("input[name='prio']:checked").val();
+            })  
+
+        }
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,33 @@
+﻿<table>
+    <tr>
+        <td><p>one time ON:</p></td>
+        <td>  <input type="date" name="dateON"></td>
+        <td><time>10:00</time></td>
+    </tr>
+    <tr>
+        <td><p>one time OFF:</p></td>
+        <td>  <input type="date" name="dateOFF" disabled></td>
+        <td><time>10:00</time></td>
+    </tr>
+    <tr>
+        <td><p>periodic ON:</p></td>
+        <td><time>10:00</time></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><p>periodic OFF:</p></td>
+        <td><time>10:00</time></td>
+        <td></td>
+    </tr>
+</table>
+<br />
+<br />
+<input type="button" value="Return" id="returnBtn" class="w3-button w3-blue w3-round" />
+<script src="scripts/jquery.js"></script>
+<script>
+    $(document).on("click", '#returnBtn', function (event) {
+        alert("clicked!");
+    });
+
+
+</script>

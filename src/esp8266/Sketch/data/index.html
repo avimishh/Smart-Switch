@@ -1,0 +1,179 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="jquery-3.3.1.min.js"></script>
+    <link href="w3.css" rel="stylesheet" />
+    <style>
+        .available-wifi-list {
+            border-collapse: collapse;
+            margin: auto;
+        }
+
+        .available-wifi-list td,th {
+            border: 1px solid black;
+        }
+
+        .debug-test-btn {
+            border: 1px solid black;
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+        }
+    </style>
+    <script>
+        let target = "http://192.168.4.1";
+        let wifiNetworks = [];
+        let triedToConnect = 0;
+        let periodIndex = 1;
+        let connectionIntervalKillCode, connectingAnimationKillCode;
+        let showingUsernamePage = false;
+
+        $(document).ready(function () {
+            getWiFi();
+            setTimeout(function () {
+                if ($(".available-wifi-list").length == 0) getWiFi();
+            }, 4000);
+            
+        })
+
+        function getWiFi() {
+            $("#refresh-button").prop("disabled", true);
+            $.post(target, { "give-wifi-networks": "*" }).done(function (data) {
+                for (let i = 0; i < data.length; i++) wifiNetworks[i] = JSON.parse(data[i]);
+                updateWiFiList();
+                $("#refresh-button").prop("disabled", false);
+            })
+        }
+
+        function updateWiFiList() {
+            $(".available-wifi-list").remove();
+
+            let $wifiTable = $("<table>").addClass("available-wifi-list w3-center w3-padding");
+            let $wifiTableHeader = $("<tr>")
+                .append($("<th>").html("Name"))
+                .append($("<th>").html("Strength"))
+                .append($("<th>").html("Password Protected"));
+            $wifiTable.append($wifiTableHeader);
+            for (let i = 0; i < wifiNetworks.length; i++) {
+                console.log(wifiNetworks[i]);
+                let $wifiRow = $("<tr>")
+                    .append($("<td>").html(wifiNetworks[i].name))
+                    .append($("<td>").html(getSterngthString(wifiNetworks[i].strength)))
+                    .append($("<td>").html(wifiNetworks[i].hasEncryption == 1 ? "Yes" : "No"))
+                    .click(function () {
+                        $(".available-wifi-list tr").removeClass("w3-blue-grey");
+                        $(".status").remove();
+                        $(this).addClass("w3-blue-grey");
+                        connectToWiFi(i);
+                    })
+                $wifiTable.append($wifiRow);
+            }
+
+            $("body").append($wifiTable);
+        }
+
+        function getSterngthString(strengthNum) {
+            if (strengthNum < -90) return "Unusable";
+            else if (strengthNum >= -90 && strengthNum < -80) return "Not Good";
+            else if (strengthNum >= -80 && strengthNum < -70) return "Okay";
+            else if (strengthNum >= -70 && strengthNum < -50) return "Very Good";
+            else if (strengthNum >= -50 && strengthNum < -30) return "Amazing";
+            else return "Perfect";
+        }
+
+        function connectToWiFi(wifiIndex) {
+            $(".enter-password").remove();
+
+            if (wifiNetworks[wifiIndex].hasEncryption == 1) {
+                let $enterPasswordDiv = $("<div>")
+                    .addClass("enter-password w3-center")
+                    .append($("<p>").html("Enter password for " + wifiNetworks[wifiIndex].name))
+                    .append($("<input>").addClass("password-input"));
+                let $connectButton = $("<input>")
+                    .prop({ "type": "button", "value": "Connect" })
+                    .click(function () {
+                        showConnectingMessage();
+                        $.post(target, { "connect-to-network": "*", "ssid": wifiNetworks[wifiIndex].name, "pass": $(".password-input").prop("value") });
+                        connectionIntervalKillCode = setInterval(connectAnswer, 2000);
+                    });
+                $enterPasswordDiv.append($connectButton);
+                $("body").append($enterPasswordDiv);
+            } else {
+                showConnectingMessage();
+                $.post(target, { "connect-to-network": "*", "ssid": wifiNetworks[wifiIndex].name });
+                connectionIntervalKillCode = setInterval(connectAnswer, 2000);
+            }
+        }
+
+        function showConnectingMessage() {
+            setStatus("Connecting");
+            connectingAnimationKillCode = setInterval(function () {
+                let str = "Connecting";
+                for (let i = 0; i < periodIndex; i++) str += ".";
+                setStatus(str);
+                periodIndex = ++periodIndex % 4;
+            }, 400);
+        }
+
+        function setStatus(status) {
+            if ($(".status").length == 0) $("body").append($("<p>").addClass("status w3-center"));
+            $(".status").html(status);
+        }
+
+        function connectAnswer() {
+            $.post(target, { "are-you-connected": "*" }).done(function (data) {
+                if (data == "yes" && !showingUsernamePage) {
+                    showingUsernamePage = true;
+                    setStatus("Connected");
+                    clearInterval(connectionIntervalKillCode);
+                    clearInterval(connectingAnimationKillCode);
+                    setTimeout(changePageToUsernameInput, 500);
+                }
+                else if (++triedToConnect > 7) {
+                    clearInterval(connectionIntervalKillCode);
+                    clearInterval(connectingAnimationKillCode);
+                    triedToConnect = 0;
+                    setStatus("Connection Failed");
+                }
+            })
+        }
+
+        function changePageToUsernameInput() {
+            $("body")
+                .empty()
+                .append($("<h1>")
+                    .text("SmartSwitch")
+                    .addClass("w3-center"))
+                .append($("<p>")
+                    .text("Please enter your SmartSwitch username")
+                    .addClass("w3-center"))
+                .append($("<div>")
+                    .append($("<input>")
+                        .addClass("usernameInput"))
+                    .addClass("w3-center"));
+            let $sendUsernameBtn = $("<input>").prop("type", "button").val("Done").click(function () {
+                $.post(target, { "username-given": "*", "username": $(".usernameInput").val() });
+                let name = $(".usernameInput").val();
+                $("body")
+                    .empty()
+                    .append($("<h1>")
+                        .text("SmartSwitch")
+                        .addClass("w3-center"))
+                    .append($("<p>")
+                        .text("Thank you " + name + ", please proceed to the SmartSwitch website.")
+                        .addClass("w3-center"));
+            });
+
+            $("body").append($("<div>").addClass("w3-center").append($sendUsernameBtn));
+
+        }
+    </script>
+</head>
+<body>
+    <h1 class="w3-center">SmartSwitch</h1>
+    <p class="w3-center">Please choose a WiFi network</p>
+    <div class="w3-center"><input id="refresh-button" type="button" onclick="getWiFi()" value="Refresh WiFi" /></div>
+</body>
+</html>

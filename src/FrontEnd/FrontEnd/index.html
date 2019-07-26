@@ -1,0 +1,174 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Switch</title>
+	<meta charset="utf-8" />
+    <script src="scripts/jquery.js"></script>
+    <link href="styles/w3css.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+    <!--<script src="scripts/NewSmartSwitchServerInterface.js"></script>-->
+    <script src="scripts/SmartSwitchJavaScriptAPI.js"></script>
+
+    <style>
+        .sidebar{
+            height:64%;
+            position:fixed;
+            z-index:1;
+            overflow:auto;
+        }
+        .w3-bar-item{
+            text-decoration:none;
+        }
+        .w3-bar-item:hover{
+            background-color:lightgrey;
+            cursor:pointer;
+        }
+        #topDiv{
+            position:fixed;
+            top:0px;
+            width:100%;
+        }
+        #mySidebar{
+            display:none; 
+        }
+        #mainDiv{ 
+            width:100%; 
+            position:relative;
+            z-index:-1;
+        }
+    </style>
+    <script>
+        let $headerDiv, $menuDiv, $sidebarDiv;
+        $(document).ready(init);
+
+        function init() {
+            $headerDiv = $("#headerDiv");
+            $menuDiv = $("#menuPanel");
+            $sidebarDiv = $("#mySidebar");
+        }
+        //if its the first time opening the website we will save the pages name as 'index'
+        if (sessionStorage.getItem("currentSmartSwitchPage") === null) {
+            sessionStorage.setItem("currentSmartSwitchPage", "index");
+        }
+
+        function updateFrameTopHeight(){
+            let frameTopHeight = parseInt($headerDiv.css("height")) + parseInt($menuDiv.css("height"));
+            $("#mainFrame").css("top", frameTopHeight-1 + "px");
+            $("#mySidebar").css("top", frameTopHeight + "px");
+            //update the height of the iframe and the height of the sidebar
+            $("#mainFrame").css("height", getMainFrameHeight());
+            $("#mySidebar").css("height", getMainFrameHeight());
+        }
+
+        $(document).ready(function () {
+            //fix the mainFrame position
+            let frameTopHeight = parseInt($headerDiv.css("height")) + parseInt($menuDiv.css("height"));
+            $("#mainFrame").css({ "position": "absolute", "top": frameTopHeight + "px", "left": "0px", "width": "100%", "height": getMainFrameHeight()});
+
+            //deal with loggedIn and notLoggedIn
+            if (sessionStorage.currentSmartSwitchUser != undefined) { //if someone is logged in show plugs page
+                openPage(sessionStorage.getItem("currentSmartSwitchPage"));
+
+                setSideBar(true); //true means logged in
+            } else { //else show the login form
+                openPage("loginForm");
+                setSideBar(false);
+            }
+
+        });
+
+        function setSideBar(loggedIn) {
+            if (loggedIn === true) {
+                //empty Sidebar
+                $sidebarDiv.empty();
+                //create sideBar in loggedIn state
+                let $plugs = $("<a>").attr({"href":"#", "class":"w3-bar-item w3-button", "onclick":"openPage('plugsMainViewer')"}).html("Plugs");
+                $sidebarDiv.append($plugs);
+                let $addNewDevice = $("<a>").attr({ "href": "#", "class": "w3-bar-item w3-button", "onclick": "openPage('addNewDevice')" }).html("Add New Device");
+                $sidebarDiv.append($addNewDevice);
+                let $userSettings = $("<a>").attr({ "href": "#", "class": "w3-bar-item w3-button", "onclick": "openPage('userSettings')" }).html("User Settings");
+                $sidebarDiv.append($userSettings);
+                let $logout = $("<a>").attr({ "href": "#", "class": "w3-bar-item w3-button", "onclick": "logout()" }).html("Logout");
+                $sidebarDiv.append($logout);
+            } else {
+                //empty Sidebar
+                $sidebarDiv.empty();
+                //create Sidebar in notLoggedIn state
+                let $login = $("<a>").attr({ "href": "#", "class": "w3-bar-item w3-button", "onclick": "openPage('loginForm')" }).html("Login");
+                $sidebarDiv.append($login);
+            }
+        }
+
+        function w3_openSidebar() {
+            $("#mainDiv").css({ "margin-left": "20%", "width": "80%" });
+            let sideBarHeight = window.innerHeight - parseInt($headerDiv.css("height")) - parseInt($menuDiv.css("height"));
+            let topDivHeight = parseInt($headerDiv.css("height")) + parseInt($menuDiv.css("height"));
+            $("#mySidebar").css({ "width": "20%", "display": "block", "height": sideBarHeight, "top": topDivHeight });
+            $("#Account").html("<i class='far fa-user'></i>").attr("onclick", "w3_closeSidebar()");
+        }
+
+        function w3_closeSidebar() {
+            $("#mainDiv").css({ "margin-left": "0%", "width": "100%" });
+            $("#mySidebar").css("display", "none");
+            $("#Account").html("<i class='fas fa-user'></i>").attr("onclick", "w3_openSidebar()");
+        }
+
+        function getMainFrameHeight() {
+            return window.innerHeight - parseInt($headerDiv.css("height")) - parseInt($menuDiv.css("height"));
+        }
+
+        function openPage(nameofpage) {
+            //change the page
+            $("#mainFrame").attr("src", nameofpage + ".html");
+            //saving the new page's name when opened
+            sessionStorage.setItem("currentSmartSwitchPage", nameofpage);
+        }
+
+        function logout() {
+            $("#loginReminder").show();
+            updateFrameTopHeight();
+            sessionStorage.clear();
+            setSideBar(false);
+            openPage("loginForm");
+        }
+
+        function homeClicked() {
+            if (sessionStorage.getItem("currentSmartSwitchUser") != null) parent.openPage("plugsMainViewer");
+            else openPage('loginForm');
+        }
+        
+    </script>
+</head>
+<body>
+    <!--the topDiv contains the header and the menuPanel-->
+    <div id="topDiv">
+        <div id="headerDiv" class="w3-container w3-red w3-blue-gray w3-padding" >
+            <h1>Welcome to SmartSwitch</h1>
+            <h3 id ="loginReminder" class="w3-medium">Login to your account to modify your plugs</h3>
+        </div>
+        <div id="menuPanel" class="w3-bar w3-gray">
+            <div id="Account" class="w3-bar-item" onclick="w3_openSidebar()"><i class="fas fa-user"></i></div>
+            <!--if logged in Home will go to plugs page, if not it will go to login page-->
+            <a href="#" id="Home" class="w3-bar-item" onclick="homeClicked()">Home</a> 
+            <a href="#" id="Plugs" class="w3-bar-item" onclick="openPage('manual')">Manual</a>
+            <a href="#" id="About" class="w3-bar-item" onclick="openPage('about')">About</a>
+        </div>
+    </div>
+
+    <!--if not logged in the sidebar needs to show only Login-->
+    <div id="mySidebar" class="sidebar w3-bar-block w3-card">
+        
+    </div>
+
+    <!--the main Div conctent is what changing with every page loading-->
+    <div id="mainDiv">
+
+        <iframe id="mainFrame">
+
+        </iframe>
+    </div>
+
+    
+    
+</body>
+</html>

@@ -1,0 +1,582 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <link href="./styles/w3css.css" rel="stylesheet" />
+    <script src="Scripts/jquery.js"></script>
+    <script src="scripts/SmartSwitchJavaScriptAPI.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Bree+Serif&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="./styles/popup.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        img {
+            width: 50px;
+            height: 50px;
+            /*border:1px solid black;*/
+        }
+
+        .popupImg img {
+            width: 300px;
+            height: auto;
+        }
+
+        .circle {
+            width: 20px;
+            height: 20px;
+            margin: auto;
+        }
+
+        button {
+            margin: 10px;
+        }
+
+        .blur {
+            text-shadow: 1px 1px 5px #aaa;
+            color: transparent;
+        }
+
+            .blur img, .blur div, .blur input[type=checkbox] {
+                opacity: 0.3;
+            }
+
+        body {
+            font-family: 'Bree Serif', serif;
+            margin-top: 50px;
+        }
+
+        #plugsTableContainer {
+            /*margin-left: 200px;
+            margin-right: 200px;*/
+            margin:auto;
+        }
+
+        #plugs_tbl td, #plugs_tbl th {
+            text-align: center;
+            vertical-align: middle;
+            padding: 8px 8px;
+            /*display: table-cell;*/
+            border-right: 1px solid black;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #plugs_tbl {
+            table-layout: fixed;
+            width: 700px;
+            margin: auto;
+        }
+        #plugs_tbl tbody tr {
+            border-bottom:1px solid black;
+            width:100px;
+        }
+
+        .myOverlay {
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            opacity: .7;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .imgColumn {       /* image select popup column */
+            float: left;
+            width: 33.33%;
+            padding: 5px;
+        }
+        #buttonsContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+
+</head>
+<body>
+
+    <br />
+
+    <div id="plugsTableContainer" class="w3-container">
+        <table id="plugs_tbl" class="w3-table-all w3-hoverable">
+            <thead>
+                <tr class="w3-gray">
+                    <th colspan="2">Plug</th>
+                    <!--<th>Icon</th>-->
+                    <!--<th>Name</th>-->
+                    <th>Priority</th>
+                    <th>State</th>
+                    <th>Options</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="buttonsContainer" class="w3-bar">
+        <button onclick="readData()" class="w3-bar-item w3-button w3-green w3-ripple" style="width:80px;height:50px;margin-left:-500px;">
+            <i class="fa fa-refresh fa-2x" data-fa-transform="rotate-90"></i>
+        </button>
+    </div>
+
+    <script>
+
+        $(document).ready(function () {
+            loadingBackground(true);
+            readData();
+            sortByTable();
+        });
+
+        //#region Read Data Into Table
+        function readData() {
+            $('.fa-pulse').remove();
+            $("#buttonsContainer").find('button').addClass('w3-gray').find('i').addClass('fa-spin');
+            plugs = getUserPlugs(sessionStorage.getItem("currentSmartSwitchUser"), loadPlugsIntoTable);
+        }
+
+        function loadPlugsIntoTable(data) {
+            // init table
+            $tableBody = $("#plugs_tbl tbody");
+            $tableBody.empty();
+            plugs = data;
+            //console.log(plugs);     // debug use
+            for (i in plugs) {
+                let plug = plugs[i];
+                if (!plug.approved)     // if plug[i] is not approved then skip
+                    continue;
+                let $tr = $("<tr>");
+
+                // create data elements
+                //let $td0 = $("<td>").html(++i);                           // N# plug
+                let $td1 = $("<td>").css({ 'overflow': 'visible', 'border-right':'0px'}).html(imgSelectorColumn(plug));        // Icon
+                let $td2 = $("<td>").html(plug.nickname);                 // plug nickname
+                let $td3 = $("<td>").html(priorityToText(plug.priority)); // priority
+                let $td4 = $("<td>").html(plugState(plug.isOn));          // plug state
+                let $td5 = $("<td>").css('overflow', 'visible').append(moreOptionsColumn(plug));        // more options popup
+
+                // add edit feature by type(text, btn) to data elements
+                addEditTextFeature($td2, plug);
+                addChangePriorityFeature($td3, plug);
+                addChangeStateFeature($td4, plug);
+
+                $tr.append(/*$td0,*/ $td1, $td2, $td3, $td4, $td5);
+                $tableBody.append($tr);
+            }
+            addTableFeatures()
+            loadingBackground(false);
+            $("#buttonsContainer").find('button').removeClass('w3-gray').find('i').removeClass('fa-spin');
+        }
+
+        var $loadingGif;
+        function loadingBackground(state) {
+            if (state === true) {
+                $loadingGif = $("<div>").css({ position: "absolute", top: "15%", left: "45%", "z-index": "3", display: "none" }).prependTo("body");
+                $loadingGif.append($("<img>", { src: "./images/loadingGif.gif", width: "200px", height: "auto" }))
+                $("body").addClass("myOverlay");
+                $loadingGif.show();
+            }
+            else if (state === false) {
+                $("body").removeClass("myOverlay");
+                $loadingGif.remove();
+            }
+        }
+        //#endregion
+
+        //#region Table Data Initializations
+        // ############################### table data ############################################
+        function priorityToText(priority) {
+            switch (priority) {
+                case 0:
+                    return "ESSENTIAL";
+                case 1:
+                    return "NONESSENTIAL";
+                case 2:
+                    return "IRRELEVANT";
+            }
+        }
+
+        function plugState(plugIsOn) {
+            let color = "red";      // default off
+            if (plugIsOn)
+                color = "green"     // if plug state is on => green light indicator
+            return $("<div>").attr({ class: "circle w3-circle w3-" + color });
+        }
+
+        //global data definition
+        var pages_url = ["device_Timing_Summary", "showPowerConsumption", "device_settings"];
+        var moreOptionsBtnNames = ["Timing Settings", "Power Usage", "Settings"];
+        function moreOptionsColumn(plug) {
+            let $span = $("<span>", { class: "popuptext" });
+            var $div = $("<div>", { text: "..." }).addClass("popup").on("click", function (e) {
+                $(".show").removeClass("show");
+                e.stopPropagation();        // avoid closing the popup when clicking inside the popup
+                $span.addClass("show");     // show popup
+                setTimeout(function () {    // add click event to body to close the popup after clicking in somwhere else
+                    $("html").click(function (event) {
+                        $span.removeClass("show");
+                        $(this).off(event);
+                    });
+                }, 1)
+            }).append($span);
+            for (let i = 0; i < 3; i++) {
+                $("<input>", {
+                    type: "button", class: "w3-button w3-khaki w3-ripple", value: moreOptionsBtnNames[i], style: "display:block;margin:1px auto;"
+                }).appendTo($span).on("click", function () {
+                    if (plug.mac) {
+                        sessionStorage.setItem("plugNickName", plug.nickname);
+                        sessionStorage.setItem("currentMac", plug.mac);
+                        parent.openPage(pages_url[i]);
+                    }
+                });
+            }
+            return $div;
+        }
+
+
+        //var pages_url = ["device_Timing_Summary", "showPowerConsumption", "device_settings"];
+        var imgNames = ["default", "TV", "fridge", "toaster", 'fan','oven','blueLED','greenLED','redLED'];
+        function imgSelectorColumn(plug) {
+            let icon = '0';
+            let $span = $("<span>", { class: "popupImg", style:"width: 200px;" });
+            if (plug.iconNumber !== undefined)
+                icon = plug.iconNumber;
+            let $currentImg = $("<img>", { src: "./icons/" + imgNames[icon] + ".png" });
+            var $div = $("<div>").append($currentImg).addClass("popup").on("click", function (e) {
+                $(".show").removeClass("show");
+                e.stopPropagation();        // avoid closing the popup when clicking inside the popup
+                $span.addClass("show");     // show popup
+                setTimeout(function () {    // add click event to body to close the popup after clicking in somwhere else
+                    $("html").click(function (event) {
+                        $span.removeClass("show");
+                        $(this).off(event);
+                    });
+                }, 1)
+            }).append($span);
+            for (let i = 0; i < imgNames.length; i++) {
+                let $imgI = $("<img>", {
+                    src: "./icons/" + imgNames[i] + ".png",id:"img" + i, style: "width:50px;height:50px;"
+                }).on("click", function (e) {
+                    e.stopPropagation();
+                    $span.removeClass("show");
+                    let selectedImgId = $(this).attr('id').substr(3, 1);
+                    $currentImg.attr("src", "./icons/" + imgNames[selectedImgId] + ".png");
+                    plug.iconNumber = selectedImgId;
+                    plugToUpdate = plug;
+                    updatePlug(plugToUpdate, readData, readData);
+                    });
+                $("<div>", {class: "imgColumn",style:"width:80px;height:auto;"}).append($imgI).appendTo($span);
+            }
+            return $div;
+        }
+        // #########################################################################################
+        //#endregion
+
+        //#region Table Features (fade rows, sort by)
+        //######################################################################################
+        function addTableFeatures() {
+            fadeRows();
+        }
+
+        // style function fading rows on hover
+        function fadeRows() {
+            let $rows = $("tbody").find("tr")    // collect tbody rows
+            $rows.hover(function (e) {
+                $(this).css("cursor", "pointer");
+                $rows.addClass('blur');
+                $(this).removeClass('blur');
+                //if ($(this).is('img'))
+                    $(this).parent().parent().removeClass('blur');
+            },
+                function (e) {
+                    //if (!$(this).is('img'))
+                        $rows.removeClass('blur');
+                });
+        }
+
+        var $sortSpan = null;
+        // sort
+        function sortByTable() {
+            $("th").not(':last').click(function () {
+                let $tbody = $("#plugs_tbl").find("tbody");
+                let rows = $tbody.find("tr").toArray().sort(comparer($(this).index()));
+                this.asc = !this.asc;
+                if ($sortSpan != null) $sortSpan.remove();
+                $sortSpan = $("<span>").text(' ▼').css('color', 'red').appendTo($(this));
+                if (!this.asc) { rows = rows.reverse(); $sortSpan.text(' ▲'); }
+                for (var i = 0; i < rows.length; i++) { $tbody.append(rows[i]); }
+            })
+
+            function comparer(index) {
+                return function (a, b) {
+                    let res;
+                    var valA = getCellValue(a, index), valB = getCellValue(b, index);
+                    if ($.isNumeric(valA) && $.isNumeric(valB))
+                        res = valA - valB;
+                    else if (typeof valA === 'string' && typeof valB === 'string')
+                        res = valA.toString().localeCompare(valB);
+                    return res;
+                }
+            }
+            function getCellValue(row, index) {
+                let text = $(row).children('td').eq(index).text();
+                if (index == 4) {
+                    if ($(row).children('td').find('td').eq(4).find('div').hasClass('red'))
+                        text = 'red';
+                    else
+                        text = 'green';
+                }
+                return text;
+            }
+        }
+
+        //######################################################################################
+        //#endregion
+
+        //#region data elements edit functions
+        function addUpdatingIcon($elm) {
+            $icon = $("<i>", { class: 'fa fa-spinner fa-pulse'});
+            $elm.append($icon);
+        }
+
+        // function add ability for text elements to modification
+        function addEditTextFeature(element, plug) {
+            element.click(function () {
+                let dataValue = $(this).html();
+                $(this).empty();
+                $("<input>", { type: 'text', value: dataValue, size:'10' }).click(function (e) {
+                    e.stopPropagation();
+                }).appendTo($(this)).focus();
+            })
+            element.focusout(function () {
+                let valueToUpdate = $(this).find('input').val();
+                let plugToUpdate = plug;
+                plugToUpdate.nickname = valueToUpdate;
+                updatePlug(plugToUpdate, readData, readData);
+                $(this).empty();
+                $(this).text(valueToUpdate);
+                addUpdatingIcon($(this));
+                //loadingBackground(true);
+            })
+        }
+
+        var priority = ["ESSENTIAL", "NONESSENTIAL", "IRRELEVANT"];
+        function addChangePriorityFeature(element, plug) {
+            element.click(function () {
+                let dataValue = $(this).html();
+                $(this).empty();
+                let i = priority.indexOf(dataValue);
+                $("<input>", { type: 'button', value: priority[i] }).click(function (e) {
+                    e.stopPropagation();
+                    i = (i + 1) % priority.length;
+                    $(this).val(priority[i]);
+                }).appendTo($(this)).focus();
+            })
+            element.focusout(function () {
+                let valueToUpdate = $(this).find('input').val();
+                $(this).empty();
+                $(this).text(valueToUpdate);
+                let plugToUpdate = plug;
+                plugToUpdate.priority = valueToUpdate;
+                updatePlug(plugToUpdate, readData, readData);
+                addUpdatingIcon($(this));
+                //loadingBackground(true);
+            })
+        }
+
+        function addChangeStateFeature(element, plug) {
+            element.find('div').click(function () {
+                $(this).toggleClass('w3-red').toggleClass('w3-green');
+                if ($(this).hasClass('w3-red'))
+                    turnPlug(plug.mac, Operations.TurnOff, readData, readData);
+                else if ($(this).hasClass('w3-green'))
+                    turnPlug(plug.mac, Operations.TurnOn, readData, readData);
+                addUpdatingIcon($(this).parent());
+                //loadingBackground(true);
+            })
+        }
+                    //#endregion
+
+        //#region OLD CODE
+                //var manipulatedPlugs = [];
+                //var plugs;
+                //var row;
+                //var $maniRow;
+                //var rowInChange = -1;
+                //var inChanging = false;
+                //var modify_enabled = false;
+
+                //var priority = [
+                //    { val: 0, text: "ESSENTIAL" },
+                //    { val: 1, text: "NONESSENTIAL" },
+                //    { val: 2, text: "IRRELEVANT" }
+                //];
+
+                //function init() {       //??
+                //    rowInChange = -1;
+                //    inChanging = false;
+                //    modify_enabled = true;
+                //}
+
+
+                //function modifyMode() {
+                //    modify_enabled = true;
+                //    $("tr").css("border", "2px solid #ff9980");
+                //}
+
+                //function updateP(newName, newPriority, newIsOn) {
+                //    let mac = plugs[rowInChange - 1].mac;
+                //    //let plug = plugs[rowInChange - 1];
+
+                //    let plug = {
+                //        "mac": mac,
+                //        "nickname": newName,
+                //        "priority": newPriority
+                //    };
+
+                //    // if (!(newName === plug.nickname))
+                //    updatePlug(plug, refresh);
+                //    // if (!(newPriority.toLowerCase() === priorityText(plug.Priority).toLowerCase()))
+                //    //      setPlugPriority(mac, newPriority);
+                //    //  if (!(plug.Approved === newApproved))
+                //    //      approvePlug(mac);
+                //    if (!(newIsOn === plug.isOn)) {
+                //        if (newIsOn)
+                //            turnPlug(mac, Operations.TurnOn, refresh)
+                //        else
+                //            turnPlug(mac, Operations.TurnOff, refresh)
+                //    }
+                //}
+
+                //function saveChanges() {
+                //    if (inChanging) {
+                //        let $tdName = $maniRow.children("td").eq(2);
+                //        let $tdPriority = $maniRow.children("td").eq(3);
+                //        //let $tdApproved = $maniRow.children("td").eq(4);
+                //        let $tdIsOn = $maniRow.children("td").eq(4);
+
+                //        let newName = $tdName.children("input").eq(0).val();
+                //        let newPriority = $tdPriority.children("select").children("option:selected").text();
+                //        //let newApproved = $tdApproved.children("input").eq(0).is(":checked") ? true : false;
+                //        //let newApproved = $tdApproved.children("input").eq(0).attr("checked") === "checked" ? true : false;
+                //        let newIsOn = $tdIsOn.children("div").hasClass("w3-green") ? true : false;
+                //        //alert(newApproved);
+                //        updateP(newName, newPriority, /*newApproved,*/ newIsOn);
+
+                //        //refresh();
+                //        $maniRow.css("backgroundColor", "");
+
+                //    }
+                //    rowInChange = -1;
+                //    inChanging = false;
+                //    $("tr").css("border", "");
+                //    modify_enabled = false;
+                //    $("tr:has(td)").on("mouseenter mouseleave");
+                //    fadeRows();
+                //}
+
+                //function editFeature() {
+                //    $("tbody").find("tr").find("td").not(":last").not(":first")
+                //}
+
+
+                //function trClicked() {
+                //    if (inChanging || !modify_enabled)
+                //        return;
+                //    $maniRow = $(this);
+                //    let id = $(this).children("td").eq(0).html();
+                //    //if (id == rowInChange)
+                //    //    return;
+                //    inChanging = true;
+                //    $maniRow.css("backgroundColor", "#ff9980");
+                //    rowInChange = id;
+                //    editMode();
+                //    $("tr:has(td)").off("mouseenter mouseleave");
+                //}
+
+                //function editMode() {
+                //    let $tdName = $maniRow.children("td").eq(2);
+                //    let old_name = $tdName.html();
+                //    $tdName.empty();
+                //    let $text = $("<input>").attr({ "type": "text", "name": "name", "value": old_name, "size": "10", "margin": "0px" });
+                //    $tdName.append($text);
+
+                //    let $tdPriority = $maniRow.children("td").eq(3);
+                //    let old_prio = $tdPriority.html();
+                //    $tdPriority.empty();
+                //    let $select = $("<select>").attr({ "type": "text", "name": "name", "value": old_name });
+                //    $tdPriority.append($select);
+                //    $(selectArr).each(function () {
+                //        $op = $("<option>").attr("value", this.val).text(this.text);
+                //        if (this.text.toLowerCase() === old_prio.toLowerCase()) $op.attr("selected", "selected");
+                //        $select.append($op);
+                //    });
+
+                //    //let $tdApproved = $maniRow.children("td").eq(4);
+                //    //$tdApproved.children("input").eq(0).relmoveAttr("disabled");
+
+                //    for (let i = 0; i < plugs.length; i++) {
+
+
+                //        let $tdIsOn = $("#plugs_tbl").children("tbody").children("tr").eq(i).children("td").eq(4)
+
+                //        //let $tdIsOn = $maniRow.children("td").eq(4);
+                //        $tdIsOn.children("div").eq(0).click(function () {
+                //            if ($(this).hasClass("w3-green"))
+                //                $(this).removeClass("w3-green").addClass("w3-red");
+                //            else if ($(this).hasClass("w3-red"))
+                //                $(this).removeClass("w3-red").addClass("w3-green");
+                //            let newIsOn = $tdIsOn.children("div").hasClass("w3-green") ? true : false;
+                //            if (!(newIsOn === plug.isOn)) {
+                //                if (newIsOn)
+                //                    turnPlug(mac, Operations.TurnOn, refresh)
+                //                else
+                //                    turnPlug(mac, Operations.TurnOff, refresh)
+                //            }
+                //        })
+                //    }
+                //}
+
+                //function switcha() {
+                //    for (let i = 0; i < plugs.length; i++) {
+
+
+                //        let $tdIsOn = $("#plugs_tbl").children("tbody").children("tr").eq(i).children("td").eq(4)
+
+                //        //let $tdIsOn = $maniRow.children("td").eq(4);
+                //        $tdIsOn.children("div").eq(0).click(function () {
+                //            if ($(this).hasClass("w3-green"))
+                //                $(this).removeClass("w3-green").addClass("w3-red");
+                //            else if ($(this).hasClass("w3-red"))
+                //                $(this).removeClass("w3-red").addClass("w3-green");
+                //            let newIsOn = $tdIsOn.children("div").hasClass("w3-green") ? true : false;
+                //            if (!(newIsOn === plug.isOn)) {
+                //                if (newIsOn)
+                //                    turnPlug(mac, Operations.TurnOn, refresh)
+                //                else
+                //                    turnPlug(mac, Operations.TurnOff, refresh)
+                //            }
+                //        })
+                //    }
+                //}
+
+                //function plugHasChanged() {
+                //    $tbody.children("tr").css("backgroundColor", "red");
+                //    manipulatedPlugs.add(plug[id - 1]);
+                //}
+
+                //function priorityToNumber(priority) {
+                //    priority = priority.toUpperCase();
+                //    switch (priority) {
+                //        case "ESSENTIAL":
+                //            return 0;
+                //        case "NONESSENTIAL":
+                //            return 1;
+                //        case "IRRELEVANT":
+                //            return 2;
+                //    }
+                //}
+                //#endregion
+    </script>
+</body>
+</html>

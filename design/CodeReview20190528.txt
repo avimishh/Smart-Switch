@@ -1,0 +1,22 @@
+- URL structure should be RESTful and look at the operations as HTTP verbs on resources
+   GET api/plugs/MAC/status - return is on
+   POST api/plugs/MAC/status?op=on - switch the state
+   DELETE api/plugs/MAC/status - return to default
+
+   GET api/plugs/MAC - return is plus info
+   POST api/plugs/MAC - add new plug
+   DELETE api/plugs/MAC - remove
+
+   GET api/user/plugs - return my plugs
+
+
+- Add authentication and authorization as part of the API calls
+- Seperate the controller logic to seperated methods-
+- Create DTOs for the types you sent/receive and use ActionResult<T> instead of serializing to json yourself 
+- Make all errros as error numbers/ enum
+- Either group all data access code to a single data access layer (multiple classes, each one is responsile to a single entity) or use the DbContext in the Controllers layer, but not both and not a single class with all DB access code.
+- DbContext shouldnt be used as singleton
+- In WebsocketsServer rewrite the dictionary so that the MAc is the key and the data (socket+string) is the value
+- Dictionary is not thread safe. use ConcurrentDictionary instead
+- Add more error handling in the webSockets server
+

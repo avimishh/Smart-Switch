@@ -1,0 +1,87 @@
+﻿<script src="scripts/jquery.js"></script>
+
+
+<div id="loginForm" class="w3-border">
+    <form action="/login.cs" class="w3-margin-left">
+        <p id="paraForErrors"></p>
+        <p>Username: <input id="UsernameInpt" type="text" name="Username" /></p>
+        <p>Password: <input id="passwordInpt" type="password" name="password" /></p>
+        <input id="signInBtn" type="button" value="Sign in" onclick="signIn()"/>
+        <p class="w3-small">If this is your first time, please <b id="registerBtn" onclick="parent.openPage('registerForm')">Register Here</b></p>
+    </form>
+</div>
+
+<style>
+    #registerBtn {
+        color: blue;
+
+    }
+    #registerBtn:hover {
+        cursor:pointer;
+    }
+    #paraForErrors {
+        visibility:hidden;
+        
+    }
+</style>
+<script>
+    let $userName, $pass, $paraForErrors;
+
+    $(document).ready(function () {
+        $paraForErrors = $("#paraForErrors");
+
+        // use enter to submit form
+        $("#loginForm").keyup(function (event) {
+            if (event.keyCode === 13) {
+                signIn();
+            }
+        });
+        
+    });
+
+    function signIn() {
+        // disable the login button
+        $("#signInBtn").attr("disabled", true);
+
+
+        // create and add animation to screen
+        let $loadingGif = $("<img>").attr({
+            'src': 'images/loadingGif.gif',
+            'width': parseInt($("#loginForm").css("width")) / 25
+        });
+        $("#loginForm").append($loadingGif);
+
+        $userName = $("#UsernameInpt").val();
+        $pass = $("#passwordInpt").val();
+        //check if inputs are empty 
+        if ($userName === "" && $pass === "") {
+            $paraForErrors.html("Please Enter Username and Password");
+            return;
+        } else if ($userName === "" && $pass != "") {
+            $paraForErrors.html("Please Enter Username");
+            return;
+        } else if ($userName != "" && $pass === "") {
+            $paraForErrors.html("Please Enter Password");
+            return;
+        }
+        
+        let tokenFromServer = parent.loginUser($userName, $pass, function (data) {
+            //success function
+            $loadingGif.remove();
+
+            parent.$("#loginReminder").hide();
+            parent.updateFrameTopHeight();
+            sessionStorage.setItem("currentSmartSwitchUser", $userName); //set Global User currently logged in
+            parent.openPage("plugsMainViewer");
+            parent.setSideBar(true);
+
+        }, function (err) {
+            //error function
+            let errMsg = "Error - " + err.responseText;
+            $("#paraForErrors").html(errMsg).css("visibility", "visible");
+            $("#signInBtn").attr("disabled", false);
+        });
+    }
+
+</script>
+

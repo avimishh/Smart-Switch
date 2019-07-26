@@ -1,0 +1,333 @@
+﻿
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <link href="styles/w3css.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="scripts/jquery.js"></script>
+    <script src="scripts/SmartSwitchJavaScriptAPI.js"></script>
+
+    <style>
+        td {
+           
+          
+           
+        }
+        th {
+           
+          
+           
+           
+        }
+        
+        .unshow{
+            display:none;
+        }
+    </style>
+
+</head>
+<body>
+    <div id="main-div"> 
+        <h4><u>Timing Settings of device:</u></h4>
+        <input type="button" value="Add New Time Setting" class="w3-button w3-blue w3-round" onclick="showPopUp()" disabled id="timeSettingBtn" />
+        <table id="main-table">
+            <tr id="properties"class="unshow">
+                <th><p>Description   </p></th>
+                <th><p>Status   </p></th>
+                <th><p>start date   </p></th>
+                <th><p>Cycle   </p></th>
+                <th><p>Remove button</p></th>
+            </tr>
+        </table>
+
+
+        <div id="myPopUp-div" style="display:none">
+            <table>
+
+                <tr>
+                    <td><p>description:</p></td>
+                    <td><input type="text" id="description" maxlength="15"></td>
+                </tr>
+                <tr>
+                    <td><p>status:</p></td>
+                    <td>
+                        <input type="radio" name="op" value="TurnOn">on<br>
+                        <input type="radio" name="op" value="TurnOff">off<br>
+                    </td>
+                </tr>
+                <tr>
+                    <td><p>start date-time:</p></td>
+                    <td><input type="datetime-local" id="dateTime"></td>
+                </tr>
+                <tr>
+                    <td><p>make periodic:</p></td>
+                    <td>
+                        <input type="checkbox" name="cycleBox" id="cycle" value="Repeated" onclick="allowTime()">periodic<br>
+
+                    </td>
+                </tr>
+                <tr id="timeTr" style="display:none">
+                    <td><p>repeat time:</p></td>
+                    <td>
+                        <input type="number" name="time-added" disabled id="timeCycle" />minutes  <br>
+                    </td>
+                    <td>
+                        <input type="checkbox" name="minuteChoiceA" id="daychoice" value="day" onclick="decideMinuteA()">day<br>
+                        <input type="checkbox" name="minuteChoiceB" id="hourchoice" value="hour" onclick="decideMinuteB()">hour<br>
+                    </td>
+                </tr>
+            </table>
+            <input type="button" id="answeryes" value="ok" onclick="approveContent()" />
+            <input type="button" id="answerno" value="cancel" onclick="cancelPopUp()" />
+
+        </div>
+    </div>
+    <script>
+        //variables for easy use during functions
+        let $myPlugMac;  //linking for easy use
+        let $myPopUp;
+        let $table;
+        let $main;
+
+        $(document).ready(function () {
+            $myPlugMac = sessionStorage.currentMac;//getting the plugs mac address
+            $table = $("#main-table");
+
+            $myPopUp = $("#myPopUp-div");
+            $myPopUp.css("z-index", "2000");
+            $myPopUp.css('border', '3px solid black');
+            $myPopUp.css("background-color", "yellow");
+            $main = $("#main-div");
+            $main.css("position", "relative");
+
+            /*creating and inserting loading gif for page*/
+            let $loadingGif = $("<img>").prop({
+                'src': 'images/loadingGif.gif',
+                'width': parseInt($("#main-div").css("width")) / 25
+            });
+            $("#main-div").append($loadingGif);             //adding gif while page is being loaded
+
+            /*getting current array of tasks for the plug*/
+            getPlugTasks($myPlugMac, function (tasks) {
+                $("th").css("width", "10%");                //setting width of tasks chart for client
+                $("#properties").removeClass("unshow");     //making first row visible for client
+                $("#timeSettingBtn").prop("disabled", false);//allowing client to add a new task with new time setting button
+                $loadingGif.remove();
+                /*loop for adding all valid tasks to client side*/
+                for (let i = 0; i < tasks.length; i++) {
+                    createRow(tasks[i]);//creating each task in client side
+                }
+
+            })
+
+        })
+        /*displaying current task in client side*/ 
+        function createRow($currentTask) {
+            let $currentTR = $("<tr>");
+            let $nameTD = $("<td>");
+            let $statusTD = $("<td>");
+            let $timeTD = $("<td>");
+            let $cycleTD = $("<td>");
+            let $buttonTD = $("<td>");
+
+            let $nameText = $("<p>");
+            let $statusText = $("<p>");
+            let $timeText = $("<p>");
+            let $cycleText = $("<p>");
+            let $removeBtn = $("<input>").prop({ "type": "button", "value": "remove" });
+            
+            $removeBtn.addClass('w3-button');
+            $removeBtn.addClass('w3-red');
+            $removeBtn.addClass('w3-round');
+
+            $nameText.text($currentTask.description);                //inserting the current task's description
+            $nameTD.append($nameText)
+
+            if ($currentTask.operation == Operations.TurnOn)
+                $statusText.text('on');
+
+            else
+                $statusText.text('off');
+
+            $statusTD.append($statusText);                           //inserting the current task's status
+
+            $timeText.text(formatDateTime($currentTask.startDate)); //inserting the current task's start date
+            $timeTD.append($timeText);
+
+            if ($currentTask.taskType == TaskTypes.Repeated) 
+                $cycleText.text('periodic');
+            
+            else 
+                $cycleText.text('one time');
+             
+
+            $cycleTD.append($cycleText);                           //inserting the current task's cycle
+
+            $buttonTD.append($removeBtn);                          //inserting the current task's delete button
+
+            /*displaying the current task for the client */
+            $currentTR.append($nameTD);
+            $currentTR.append($statusTD);
+            $currentTR.append($timeTD);
+            $currentTR.append($cycleTD);
+            $currentTR.append($buttonTD);
+            $table.append($currentTR);
+            
+            cleanSlatePopUp();                                    //making the popUp ready for next use
+
+            /*on click removes associated task*/
+            $removeBtn.on('click', function () {
+                removeTask($currentTask, function () {
+                    $currentTR.remove();
+                })
+
+            })
+        }
+        
+        /*creates a new task according to popUp results*/ 
+        function addSetting() {
+            let repeatMinute;                            //var for knowing repeated time of task
+            let operationString = $("input[name='op']:checked").val();
+            let operationToSend;
+            if (operationString === "TurnOn") operationToSend = Operations.TurnOn;
+            else operationToSend = Operations.TurnOff;
+
+            let desc = $("#description").val();
+
+            let taskTypeString = $("input[name='cycleBox']:checked").val();
+            let taskTypeToSend;
+            if (taskTypeString === "Repeated") taskTypeToSend = TaskTypes.Repeated;
+            else taskTypeToSend = TaskTypes.OneTime;
+
+            let newTask;
+
+            /*if the new task is a periodic type*/
+            if ($("input[name='cycleBox']:checked").length > 0) {
+                if ($('#hourchoice').is(':checked'))
+                    repeatMinute = 60;
+                else
+                    if ($('#daychoice').is(':checked'))
+                        repeatMinute = 24*60;
+                    else
+                        repeatMinute = $("#timeCycle").val();
+
+                
+
+                //creating the new task with information gathered from popUp
+                newTask = {
+                    operation: operationToSend,
+                    deviceMac: $myPlugMac,
+                    description: desc,
+                    taskType: taskTypeToSend,
+                    repeatEvery: repeatMinute,
+                    startDate: new Date($("#dateTime").val())
+                }
+            }
+            /*else the new task is a one time type*/
+            else
+                newTask = {
+                    operation: operationToSend,
+                    deviceMac: $myPlugMac,
+                    description: desc,
+                    taskType: taskTypeToSend,
+                    repeatEvery: 0,
+                    startDate: new Date($("#dateTime").val())
+                }
+
+            
+            /*adds the new task to database and display it for the client*/
+            addTask(newTask, function () {
+                createRow(newTask);
+                
+            });
+
+        }
+        /*cancel the display of the popUp in case the client pressed 'cancel'*/
+        function cancelPopUp() {
+            $myPopUp.hide();
+            $("input[type='button']").prop("disabled", false);
+            cleanSlatePopUp();
+        }
+        /*displaying the popUp for the client */
+        function showPopUp() {
+            
+            $myPopUp.css({ top: 40, left: 50, position: 'absolute' });    //display coordinates for popUp
+
+            $("input[type='button']").prop("disabled", true);             //disable all buttons
+            $("#myPopUp-div input[type='button']").prop("disabled", false);//leave the buttons in the popUp workin
+
+           
+            let y = $myPopUp.css('top');
+            $myPopUp.css('top', y + 'px');
+            $myPopUp.show();
+
+        }
+        /*hides popUp after client used it and start's the procces of creating a new task and adding it to the database*/
+        function approveContent() {
+            $myPopUp.hide()
+            $("input[type='button']").prop("disabled", false);
+            addSetting();
+        }
+        /*this function lets the client choose a priodic timeframe(day,hour or client minute number) */
+        function allowTime() {
+            if ($('#cycle').is(':checked')) {
+                $("#timeCycle").prop("disabled", false);
+                $("#timeTr").show();                     //shows the options for the client
+            }
+
+            else {
+                $("#timeCycle").prop("disabled", true);  //hides the options for the client
+                $("#timeTr").hide();
+                $('#daychoice').prop('checked', false);
+                $('#hourchoice').prop('checked', false);
+                $("#timeCycle").prop('disabled', false);
+            }
+
+        }
+        /*this function checks if option 'day' was checked legally */
+        function decideMinuteA() {
+            if ($('#daychoice').is(':checked') && $('#hourchoice').is(':checked'))
+                $('#daychoice').prop('checked', false);
+            else
+                if ($('#daychoice').is(':checked')) {
+                $("#timeCycle").prop('disabled', true);
+            }
+                else
+                    $("#timeCycle").prop('disabled', false);
+            
+        }
+        /*this function checks if option 'hour' was checked legally */
+        function decideMinuteB() {
+            if ($('#daychoice').is(':checked') && $('#hourchoice').is(':checked'))
+                $('#hourchoice').prop('checked', false);
+            else
+                if ($('#hourchoice').is(':checked')) {
+                    $("#timeCycle").prop('disabled', true);
+                }
+                else
+                    $("#timeCycle").prop('disabled', false);
+        }
+
+        /*getting the popUp ready for its next use by clearing previous client choices */
+        function cleanSlatePopUp() {
+            $("#description").val('');
+            $("input[type='radio']").prop("checked", false);
+            $("#cycle").prop("checked", false);
+            $("#timeTr").hide();
+            $('#daychoice').prop('checked', false);
+            $('#hourchoice').prop('checked', false);
+        }
+        /*function returns a date-time string*/ 
+        function formatDateTime(date) {
+            let month = (date.getMonth() + 1) <= 9 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1;
+            let day = date.getDate() <= 9 ? '0' + date.getDate() : date.getDate();
+            let hour = date.getHours() <= 9 ? '0' + date.getHours() : date.getHours();
+            let minute = date.getMinutes() <= 9 ? '0' + date.getMinutes() : date.getMinutes();
+            return day + '/' + month + '/' + date.getFullYear() + ' ' + hour + ':' + minute;
+        }
+    </script>
+</body>
+</html>

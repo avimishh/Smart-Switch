@@ -1,0 +1,49 @@
+﻿<script src="scripts/jquery.js"></script>
+
+<h2>User Settings:</h2>
+<h3>To Change Password</h3>
+<table>
+    <tr>
+        <td>Current Password</td>
+        <td><input type="password" id="passInpt" /></td>
+    </tr>
+    <tr>
+        <td>New Password</td>
+        <td><input type="password" id="newPassInpt" /></td>
+    </tr>
+    <tr>
+        <td>Re-Type New Password</td>
+        <td><input type="password" id="reNewPassInpt" /></td>
+    </tr>
+    <tr>
+        <td rowspan="2"><input type="button" value="Change Password" onclick="changePass()"/></td>
+    </tr>
+    <tr>
+        <td rowspan="2"><span id="errSpan"></span></td>
+    </tr>
+</table>
+<br />
+
+<script>
+    let $userName, $pass;
+
+    function changePass() {
+
+        parent.changePassword(
+            sessionStorage.getItem("currentSmartSwitchUser"),
+            $("#passInpt").val(),
+            $("#newPassInpt").val(),
+            function () {
+                $("#errSpan").html("Success - New Password Has Been Saved");
+            },
+            function () {
+                $("#errSpan").html("Error - The New Password Has Not Been Updated");
+            },
+            function () {
+                setTimeout(function () {
+                    $("#errSpan").html("");
+                }, 2000);
+            });
+    }
+
+</script>

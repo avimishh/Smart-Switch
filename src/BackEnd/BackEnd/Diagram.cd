@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="BackEnd.Models.Plug">
+    <Position X="16.25" Y="2.25" Width="3" />
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <NestedTypes>
+      <Enum Name="BackEnd.Models.Plug.Priorities">
+        <TypeIdentifier>
+          <NewMemberFileName>Models\Plug.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>ABABACACBBAAAAAEAAACAAAAAQAAAAAgQAAIAQAAAAA=</HashCode>
+      <FileName>Models\Plug.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BackEnd.Models.PlugNotConnectedException">
+    <Position X="12" Y="0.75" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\PlugNotConnectedException.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BackEnd.Models.PowerUsageSample">
+    <Position X="1.75" Y="1" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>EQAAAAAAAAAAAAgAgACAAAAAAAAAAAAAABAAAAAAAAA=</HashCode>
+      <FileName>Models\PowerUsageSample.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BackEnd.Models.SmartSwitchDbContext">
+    <Position X="10.25" Y="4.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAACAAAAAAEAAAAAAAAAAAAAAgAAAAAAAIAAAAAAA=</HashCode>
+      <FileName>Models\SmartSwitchDbContext.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BackEnd.Models.Task">
+    <Position X="14.25" Y="2.25" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <NestedTypes>
+      <Enum Name="BackEnd.Models.Task.Operations">
+        <TypeIdentifier>
+          <NewMemberFileName>Models\Task.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Enum Name="BackEnd.Models.Task.TaskTypes">
+        <TypeIdentifier>
+          <NewMemberFileName>Models\Task.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAAQAAAAIAAgAAQAAAAAAAAAAEkAAAAAAIEAAEACCAA=</HashCode>
+      <FileName>Models\Task.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BackEnd.Models.User">
+    <Position X="7" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAEAAAAQAAAAAAAAAAAAACAAAAAAAAAAA=</HashCode>
+      <FileName>Models\User.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BackEnd.Models.UsernameAlreadyInUseException">
+    <Position X="6" Y="7.5" Width="3.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\UsernameAlreadyInUseException.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BackEnd.Models.Auth.UserOwnershipValidator">
+    <Position X="9.75" Y="7.75" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\Auth\UserOwnershipValidator.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BackEnd.Models.Websockets.MacConnectionPair">
+    <Position X="10.25" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAABAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\Websockets\MacConnectionPair.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BackEnd.Models.Websockets.WebsocketsServer" BaseTypeListCollapsed="true">
+    <Position X="3.25" Y="4" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>ABAAEAAAACAAEEAAQIACAAABABAAIIAAQAAAAAAAAAA=</HashCode>
+      <FileName>Models\Websockets\WebsocketsServer.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Interface Name="BackEnd.Models.Websockets.IWebsocketsServer">
+    <Position X="6.75" Y="5" Width="3" />
+    <TypeIdentifier>
+      <HashCode>ABAAAAAAACAAAAAAAAAAAAABAAAAAAAAQAAAAAAAAAA=</HashCode>
+      <FileName>Models\Websockets\IWebsocketsServer.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Enum Name="BackEnd.Models.Error">
+    <Position X="1.25" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ACAAAAAAAEAAAAEAAAAAAAAAAAAIABAAIAAAgCAAAAA=</HashCode>
+      <FileName>Models\Error.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

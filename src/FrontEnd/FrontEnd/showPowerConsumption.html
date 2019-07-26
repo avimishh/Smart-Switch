@@ -1,0 +1,143 @@
+﻿<title>Smart Switch - Power Consumption Page</title>
+<meta charset="utf-8" />
+<script src="scripts/jquery.js"></script>
+<link href="styles/w3css.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="scripts/SmartSwitchJavaScriptAPI.js"></script>
+<script>
+
+    function hideLoadingGif() {
+        $("#loading-gif").hide();
+    }
+
+    $(document).ready(function () {
+        $("#devicespn").html(" " + sessionStorage.getItem("plugNickName"));
+
+        $("#loading-gif").show();
+        getPlugSamples(sessionStorage.getItem("currentMac"), new Date(2000, 1), new Date(4000, 1), parseGraphData, hideLoadingGif);
+
+        document.getElementById("select").onchange = function () {
+            buildGraph();
+        }
+    });
+    var samplesX = [];
+    var samplesY = [];
+    var dataInNIS = [];
+
+    function show() {     
+        $("#loading-gif").show();
+        getPlugSamples(sessionStorage.getItem("currentMac"), new Date($("#start").val()), new Date($("#end").val()), parseGraphData, hideLoadingGif);
+    }
+
+    function parseGraphData(data) {
+        for (let j = 0; j < data.length; j++) {
+                samplesX[j] = data[j].sampleDate;
+                samplesY[j] = (data[j].voltage * data[j].current) * 0.001;
+                dataInNIS[j] = 0;
+            }
+            dataInNIS[0] = samplesY[0] * (0.53 / 60);
+            for (let k = 1; k < data.length; k++) {
+                dataInNIS[k] = dataInNIS[k - 1] + samplesY[k] * (0.53 / 60);
+            }
+            hideLoadingGif();
+            buildGraph();
+    }
+         
+    function buildGraph() {
+        var s = document.getElementById("select").value;
+        if (s == 2) {
+   
+            var arr = {
+                x: samplesX,
+                y: dataInNIS,
+                type: 'scatter',
+            };
+            var data1 = [arr];
+            var layout = {
+                xaxis: {
+                    title: 'Samples'
+                },
+                yaxis: {
+                    title: 'NIS'
+                }
+            };
+
+            Plotly.newPlot('myDiv', data1, layout, { showSendToCloud: true });
+
+        }
+        if (s == 1) {
+
+            var arr = {
+                x: samplesX,
+                y: samplesY,
+                mode: 'markers',
+                type: 'scatter',
+            };
+            var data1 = [arr];
+            var layout = {
+                xaxis: {
+                    title: 'Samples'
+                },
+                yaxis: {
+                    title: 'KW'
+                }
+            };
+
+            Plotly.newPlot('myDiv', data1, layout, { showSendToCloud: true });
+         
+
+        }
+    }
+
+    
+
+</script>
+
+
+<div id="mainDiv">
+    <br />
+    <b> <span>Power Consumption Of:</span><span id="devicespn"></span> </b> <span>          </span> <img id="loading-gif" src="images/loadingGif.gif" style="display:none; width: 1.6%" />
+    <div>
+        <div style="width:70%;float:left" id="myDiv">
+        </div>
+        <div style="width:27%;float:right;padding-left:5px">
+            <b><span> NIS/KW:</span></b>
+            <select id="select">
+                <option value="1">  KW </option>
+                <option value="2">  NIS </option>
+            </select>
+            <br /> <br />  <br />
+            <table>
+                <tr>
+                    <td>
+                        <b> <span> Start Date</span> </b>
+                    </td>
+                    <td>
+                        <input type="datetime-local" id="start" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b> <span> End Date</span> </b>
+                    </td>
+                    <td>
+                        <input type="datetime-local" id="end" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="button" value="show" onclick="show()" class="w3-button w3-border" />
+                    </td>
+                </tr>
+            </table>
+            <br />
+        </div>
+    </div>
+</div>
+
+
+
+
+
+

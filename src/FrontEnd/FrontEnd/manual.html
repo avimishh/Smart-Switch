@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <style>
+        body {
+            margin: 40px auto;
+            line-height: 1.6;
+            font-size: 18px;
+            color: #444;
+            padding: 0 10px;
+        }
+
+        h1, h2, h3 {
+            line-height: 1.2
+        }
+
+        #registerBtn {
+            color: blue;
+        }
+
+            #registerBtn:hover {
+                cursor: pointer;
+            }
+    </style>
+</head>
+<body>
+    <h2>Operating Your Smart Switch Device</h2>
+    <p>To connect a new device:</p>
+    <ol start="0">
+        <li>If you don't have a SmartSwitch account please <b id="registerBtn" onclick="parent.openPage('registerForm')">Register Here</b> first.</li>
+        <li>Press the touch sensor for 5 seconds until it starts blinking.</li>
+        <li>Connect to the device by phone/computer by selecting "SmartSwitch ..." on the WiFi selection settings of your phone/computer.</li>
+        <li>Open your browser of choice.</li>
+        <li>Go to 192.168.4.1.</li>
+        <li>Choose a WiFi network for the device to operate on.</li>
+        <li>Enter your SmartSwitch username.</li>
+    </ol>
+</body>
+</html>
