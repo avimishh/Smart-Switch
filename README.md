@@ -20,7 +20,3 @@ Efficiently manage home appliances everywhere.
 ### Turning a plug on/off
 
 ![Turning a plug on/off](./exampleGifs/turn.gif)
-
-### Adding a new plug
-
-![Adding a new plug](./exampleGifs/connect.gif)
