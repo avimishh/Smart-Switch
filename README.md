@@ -13,7 +13,6 @@ Efficiently manage home appliances everywhere.
 - Turn on/off devices from the website
 - Schedule (may be periodic) tasks to turn on/off devices
 - View power consumption & cost
-- [Many more features...](./projectSubmission/Book/Book.docx)
 
 ## Examples
 
