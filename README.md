@@ -18,4 +18,4 @@ Efficiently manage home appliances everywhere.
 
 ### Turning a plug on/off
 
-![Turning a plug on/off](./exampleGifs/turn.gif)
+![Turning a plug on/off](./exampleGifs/example.gif)
